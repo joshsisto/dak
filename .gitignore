@@ -4,3 +4,4 @@ __pycache__/
 .env
 data/cache/
 data/calendar_events.txt
+data/calendar_events-*.txt

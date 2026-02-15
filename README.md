@@ -105,6 +105,7 @@ sudo journalctl -u pi-dashboard-kiosk -f
 - Calendar ICS URLs are fetched at most once per cache window (`CALENDAR_CACHE_SECONDS`, default 12 hours).
 - On network failure, stale cached ICS is used when available.
 - A readable event report is written to `CALENDAR_EVENTS_TEXT_FILE` and updated as events change.
+- A daily rotated copy is also written as `calendar_events-YYYY-MM-DD.txt` in the same directory.
 
 ## Notes / Limitations
 - iCloud Shared Album integration uses undocumented Apple sharedstreams endpoints.

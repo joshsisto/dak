@@ -316,8 +316,9 @@ class CalendarService:
         return age.total_seconds() <= self._settings.calendar_cache_seconds
 
     def _write_events_report(self, payload: dict[str, Any]) -> None:
+        now_local = datetime.now()
         lines: list[str] = []
-        generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        generated_at = now_local.strftime("%Y-%m-%d %H:%M:%S")
         lines.append("Dashboard Calendar Events")
         lines.append(f"Generated: {generated_at}")
         lines.append(f"Timezone: {self._settings.display_timezone}")
@@ -355,11 +356,11 @@ class CalendarService:
 
         text = "\n".join(lines).rstrip() + "\n"
         export_file = self._settings.calendar_events_text_file
-        if export_file.exists():
-            existing = export_file.read_text(encoding="utf-8")
-            if existing == text:
-                return
-        export_file.write_text(text, encoding="utf-8")
+        self._write_text_if_changed(export_file, text)
+
+        rotated_file = self._daily_rotated_export_path(export_file, now_local)
+        if rotated_file != export_file:
+            self._write_text_if_changed(rotated_file, text)
 
     def _format_event_line(self, event: dict[str, Any]) -> str:
         day = str(event.get("day_label", "")).strip()
@@ -371,3 +372,18 @@ class CalendarService:
         if location:
             base += f" @ {location}"
         return base
+
+    def _daily_rotated_export_path(self, base_path: Path, now_local: datetime) -> Path:
+        date_suffix = now_local.strftime("%Y-%m-%d")
+        if base_path.suffix:
+            filename = f"{base_path.stem}-{date_suffix}{base_path.suffix}"
+        else:
+            filename = f"{base_path.name}-{date_suffix}"
+        return base_path.with_name(filename)
+
+    def _write_text_if_changed(self, file_path: Path, text: str) -> None:
+        if file_path.exists():
+            existing = file_path.read_text(encoding="utf-8")
+            if existing == text:
+                return
+        file_path.write_text(text, encoding="utf-8")

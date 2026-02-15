@@ -193,16 +193,14 @@
         forecast.innerHTML = "";
         const forecastDays = (weather?.daily || []).slice(0, 4);
         for (const day of forecastDays) {
-          const row = document.createElement("div");
-          row.className = "forecast-row";
-          row.innerHTML = `
-            <div class="forecast-row-main">
-              <div class="forecast-row-day">${day.day_label}</div>
-              <div class="forecast-row-icon">${day.icon}</div>
-            </div>
-            <div class="forecast-row-temp">${Math.round(day.high)}°<span>/${Math.round(day.low)}°</span></div>
+          const card = document.createElement("div");
+          card.className = "forecast-card";
+          card.innerHTML = `
+            <div class="forecast-card-day">${day.day_label}</div>
+            <div class="forecast-card-icon">${day.icon}</div>
+            <div class="forecast-card-temp">${Math.round(day.high)}°<span>/${Math.round(day.low)}°</span></div>
           `;
-          forecast.appendChild(row);
+          forecast.appendChild(card);
         }
       }
 
