@@ -1,0 +1,16 @@
+[Unit]
+Description=Pi Dashboard Kiosk Browser
+After=graphical.target display-manager.service pi-dashboard.service
+Wants=graphical.target pi-dashboard.service
+
+[Service]
+Type=simple
+User={{APP_USER}}
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/{{APP_USER}}/.Xauthority
+ExecStart=/usr/bin/chromium-browser --kiosk --incognito --noerrdialogs --disable-infobars --check-for-update-interval=31536000 http://localhost:8080
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

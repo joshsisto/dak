@@ -5,10 +5,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=pi
-WorkingDirectory=/home/pi/pi-dashboard
+User={{APP_USER}}
+WorkingDirectory={{APP_DIR}}
 Environment="PYTHONUNBUFFERED=1"
-ExecStart=/home/pi/pi-dashboard/.venv/bin/python -m app.main
+ExecStart={{APP_DIR}}/.venv/bin/python -m app.main
 Restart=always
 RestartSec=5
 

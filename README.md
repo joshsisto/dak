@@ -53,24 +53,41 @@ python -m app.main
 - `PHOTOS_DIRECTORY`: used when `PHOTOS_SOURCE=directory` or as fallback.
 
 ## Raspberry Pi Kiosk Setup
-Install Chromium and auto-start in kiosk mode:
+Run this once on the Pi to install dependencies and enable boot services:
 ```bash
-chromium-browser --kiosk --incognito --noerrdialogs http://localhost:8080
+cd ~/codex
+./deploy/install_on_pi.sh
 ```
 
-Run the Flask app as a service (recommended) with `systemd`, then launch Chromium on login.
+What this script does:
+- creates/updates `.venv`
+- installs `requirements.txt`
+- creates `.env` from `.env.example` if missing
+- installs and enables `pi-dashboard.service` (backend on boot)
+- installs and enables `pi-dashboard-kiosk.service` (Chromium kiosk on boot, optional)
 
-Example `systemd` unit is included at `deploy/pi-dashboard.service`.
-
-Install it on Pi:
+Options:
+- disable kiosk service:
 ```bash
-sudo cp deploy/pi-dashboard.service /etc/systemd/system/pi-dashboard.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now pi-dashboard.service
-sudo systemctl status pi-dashboard.service
+ENABLE_KIOSK=0 ./deploy/install_on_pi.sh
+```
+- override app path/user if needed:
+```bash
+APP_DIR=/home/pi/codex APP_USER=pi ./deploy/install_on_pi.sh
 ```
 
-Kiosk helper script is included at `deploy/kiosk.sh`.
+Manual service commands:
+```bash
+sudo systemctl restart pi-dashboard
+sudo systemctl status pi-dashboard
+sudo journalctl -u pi-dashboard -f
+```
+
+Kiosk service logs:
+```bash
+sudo systemctl status pi-dashboard-kiosk
+sudo journalctl -u pi-dashboard-kiosk -f
+```
 
 ## API Notes
 - `/api/dashboard` returns:
