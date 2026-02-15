@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
+import logging
 from datetime import date, datetime, time, timedelta
+from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -10,11 +13,15 @@ from icalendar import Calendar
 
 from app.config import CalendarSource, Settings
 
+logger = logging.getLogger(__name__)
+
 
 class CalendarService:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
         self._session = requests.Session()
+        self._settings.calendar_cache_directory.mkdir(parents=True, exist_ok=True)
+        self._settings.calendar_events_text_file.parent.mkdir(parents=True, exist_ok=True)
 
     def upcoming_events(self) -> dict[str, Any]:
         tz = ZoneInfo(self._settings.display_timezone)
@@ -23,7 +30,7 @@ class CalendarService:
         next_month_start = self._next_month_start(month_start)
 
         if not self._settings.calendar_sources:
-            return {
+            result = {
                 "combined": [],
                 "by_calendar": [],
                 "errors": [],
@@ -34,6 +41,8 @@ class CalendarService:
                     now.date(),
                 ),
             }
+            self._write_events_report(result)
+            return result
 
         event_window_end = now + timedelta(days=self._settings.calendar_days_ahead)
         query_start = min(now - timedelta(hours=12), month_start)
@@ -77,7 +86,7 @@ class CalendarService:
         combined.sort(key=lambda e: (e["start"], e["all_day"], e["title"]))
         combined = combined[: self._settings.calendar_event_limit]
 
-        return {
+        result = {
             "combined": [self._serialize_event(event) for event in combined],
             "by_calendar": by_calendar,
             "errors": errors,
@@ -88,6 +97,8 @@ class CalendarService:
                 now.date(),
             ),
         }
+        self._write_events_report(result)
+        return result
 
     def _events_from_source(
         self,
@@ -96,12 +107,8 @@ class CalendarService:
         range_start: datetime,
         range_end: datetime,
     ) -> list[dict[str, Any]]:
-        response = self._session.get(
-            source.url,
-            timeout=self._settings.http_timeout_seconds,
-        )
-        response.raise_for_status()
-        calendar = Calendar.from_ical(response.text)
+        ics_text = self._get_cached_or_live_ics(source)
+        calendar = Calendar.from_ical(ics_text)
         expanded = recurring_ical_events.of(calendar).between(range_start, range_end)
 
         events: list[dict[str, Any]] = []
@@ -245,3 +252,122 @@ class CalendarService:
         if month_start.month == 12:
             return month_start.replace(year=month_start.year + 1, month=1)
         return month_start.replace(month=month_start.month + 1)
+
+    def _get_cached_or_live_ics(self, source: CalendarSource) -> str:
+        cache_file = self._cache_file_for_source(source)
+        cached = self._read_cache_file(cache_file)
+        if cached and self._is_cache_fresh(cached):
+            return cached["ics"]
+
+        try:
+            response = self._session.get(
+                source.url,
+                timeout=self._settings.http_timeout_seconds,
+            )
+            response.raise_for_status()
+            ics_text = response.text
+            self._write_cache_file(cache_file, source.url, ics_text)
+            return ics_text
+        except Exception as exc:  # noqa: BLE001
+            if cached and cached.get("ics"):
+                logger.warning(
+                    "Using stale cached ICS for %s because live fetch failed: %s",
+                    source.name,
+                    exc,
+                )
+                return cached["ics"]
+            raise
+
+    def _cache_file_for_source(self, source: CalendarSource) -> Path:
+        return self._settings.calendar_cache_directory / f"{source.id}.json"
+
+    def _read_cache_file(self, cache_file: Path) -> dict[str, str] | None:
+        if not cache_file.exists():
+            return None
+        try:
+            payload = json.loads(cache_file.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            return None
+        fetched_at = payload.get("fetched_at")
+        ics_text = payload.get("ics")
+        if not isinstance(fetched_at, str) or not isinstance(ics_text, str):
+            return None
+        return {"fetched_at": fetched_at, "ics": ics_text}
+
+    def _write_cache_file(self, cache_file: Path, source_url: str, ics_text: str) -> None:
+        payload = {
+            "fetched_at": datetime.now(ZoneInfo("UTC")).isoformat(),
+            "source_url": source_url,
+            "ics": ics_text,
+        }
+        cache_file.write_text(json.dumps(payload), encoding="utf-8")
+
+    def _is_cache_fresh(self, cached: dict[str, str]) -> bool:
+        fetched_at_raw = cached.get("fetched_at")
+        if not fetched_at_raw:
+            return False
+        try:
+            fetched_at = datetime.fromisoformat(fetched_at_raw)
+        except ValueError:
+            return False
+        if fetched_at.tzinfo is None:
+            return False
+        age = datetime.now(fetched_at.tzinfo) - fetched_at
+        return age.total_seconds() <= self._settings.calendar_cache_seconds
+
+    def _write_events_report(self, payload: dict[str, Any]) -> None:
+        lines: list[str] = []
+        generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        lines.append("Dashboard Calendar Events")
+        lines.append(f"Generated: {generated_at}")
+        lines.append(f"Timezone: {self._settings.display_timezone}")
+        lines.append("")
+
+        combined = payload.get("combined", [])
+        lines.append(f"Combined Upcoming Events ({len(combined)})")
+        for event in combined:
+            lines.append(self._format_event_line(event))
+        if not combined:
+            lines.append("- None")
+        lines.append("")
+
+        lines.append("By Calendar")
+        by_calendar = payload.get("by_calendar", [])
+        for calendar in by_calendar:
+            name = str(calendar.get("name", "Calendar"))
+            events = calendar.get("events", [])
+            lines.append(f"[{name}] ({len(events)})")
+            if events:
+                for event in events:
+                    lines.append(self._format_event_line(event))
+            else:
+                lines.append("- None")
+            lines.append("")
+
+        errors = payload.get("errors", [])
+        if errors:
+            lines.append("Errors")
+            for error in errors:
+                calendar_name = error.get("calendar_name", "unknown")
+                message = error.get("message", "Unknown error")
+                lines.append(f"- {calendar_name}: {message}")
+            lines.append("")
+
+        text = "\n".join(lines).rstrip() + "\n"
+        export_file = self._settings.calendar_events_text_file
+        if export_file.exists():
+            existing = export_file.read_text(encoding="utf-8")
+            if existing == text:
+                return
+        export_file.write_text(text, encoding="utf-8")
+
+    def _format_event_line(self, event: dict[str, Any]) -> str:
+        day = str(event.get("day_label", "")).strip()
+        time_label = str(event.get("time_label", "")).strip()
+        calendar_name = str(event.get("calendar_name", "")).strip()
+        title = str(event.get("title", "(No title)")).strip()
+        location = " ".join(str(event.get("location", "")).split()).strip()
+        base = f"- {day} {time_label} [{calendar_name}] {title}".strip()
+        if location:
+            base += f" @ {location}"
+        return base

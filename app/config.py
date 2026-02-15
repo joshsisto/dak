@@ -21,6 +21,9 @@ class Settings:
     calendar_sources: tuple[CalendarSource, ...]
     calendar_days_ahead: int
     calendar_event_limit: int
+    calendar_cache_seconds: int
+    calendar_cache_directory: Path
+    calendar_events_text_file: Path
     display_timezone: str
     weather_latitude: float
     weather_longitude: float
@@ -50,6 +53,13 @@ class Settings:
             calendar_sources=calendar_sources,
             calendar_days_ahead=int(os.getenv("CALENDAR_DAYS_AHEAD", "7")),
             calendar_event_limit=int(os.getenv("CALENDAR_EVENT_LIMIT", "12")),
+            calendar_cache_seconds=int(os.getenv("CALENDAR_CACHE_SECONDS", "43200")),
+            calendar_cache_directory=Path(
+                os.getenv("CALENDAR_CACHE_DIRECTORY", "./data/cache/calendar")
+            ).expanduser(),
+            calendar_events_text_file=Path(
+                os.getenv("CALENDAR_EVENTS_TEXT_FILE", "./data/calendar_events.txt")
+            ).expanduser(),
             display_timezone=os.getenv("DISPLAY_TIMEZONE", os.getenv("TZ", "UTC")).strip(),
             weather_latitude=float(os.getenv("WEATHER_LATITUDE", "40.7128")),
             weather_longitude=float(os.getenv("WEATHER_LONGITUDE", "-74.0060")),

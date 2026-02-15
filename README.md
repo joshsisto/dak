@@ -5,6 +5,8 @@ This project is a self-hosted wallboard app you can run on a Raspberry Pi.
 Current MVP features:
 - iCloud shared calendar events (single or multiple public ICS URLs)
 - Combined upcoming events list (with per-calendar color badges)
+- Calendar ICS caching (12-hour default) to reduce iCloud requests
+- Human-readable calendar event export file
 - Server-time clock with seconds (NTP-backed on host OS)
 - Weather from Open-Meteo
 - Shared photos from:
@@ -46,6 +48,9 @@ python -m app.main
 ## Required Config
 - `CALENDAR_SOURCES`: preferred multi-calendar config in format `Name|ICS_URL;Name2|ICS_URL2`.
 - `CALENDAR_ICS_URL`: legacy single-calendar fallback (still supported).
+- `CALENDAR_CACHE_SECONDS`: ICS cache TTL (default `43200` / 12h).
+- `CALENDAR_CACHE_DIRECTORY`: where cached ICS files are stored.
+- `CALENDAR_EVENTS_TEXT_FILE`: output text file for readable event export.
 - `DISPLAY_TIMEZONE`: timezone used for event labels and displayed clock.
 - `WEATHER_LATITUDE` / `WEATHER_LONGITUDE`: your location for weather.
 - `PHOTOS_SOURCE`: `icloud_shared_album` or `directory`.
@@ -95,6 +100,11 @@ sudo journalctl -u pi-dashboard-kiosk -f
   - `calendars.by_calendar`: per-calendar upcoming events (returned, currently hidden in UI)
   - `calendars.month_view`: month grid payload (returned, currently hidden in UI)
   - `time`: server clock snapshot and NTP sync status
+
+## Calendar Cache + Export
+- Calendar ICS URLs are fetched at most once per cache window (`CALENDAR_CACHE_SECONDS`, default 12 hours).
+- On network failure, stale cached ICS is used when available.
+- A readable event report is written to `CALENDAR_EVENTS_TEXT_FILE` and updated as events change.
 
 ## Notes / Limitations
 - iCloud Shared Album integration uses undocumented Apple sharedstreams endpoints.
