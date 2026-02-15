@@ -1,0 +1,330 @@
+:root {
+  --bg-ink: #051a2d;
+  --bg-steel: #0c2f48;
+  --accent-hot: #ff8a3d;
+  --accent-cold: #58d7ff;
+  --text-main: #f8fbff;
+  --text-muted: #c2d3e1;
+  --panel-bg: rgba(6, 20, 34, 0.72);
+  --panel-border: rgba(88, 215, 255, 0.28);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--text-main);
+  font-family: "Archivo", sans-serif;
+  background: radial-gradient(circle at 10% 10%, #1f4f75, var(--bg-ink) 50%, #03111f 100%);
+}
+
+.background-gradient {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 85% 20%, rgba(255, 138, 61, 0.26), transparent 45%),
+    radial-gradient(circle at 15% 80%, rgba(88, 215, 255, 0.18), transparent 42%);
+  pointer-events: none;
+}
+
+.layout {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(420px, 0.88fr) minmax(0, 1.72fr);
+  grid-template-rows: minmax(285px, 35vh) minmax(0, 1fr);
+  grid-template-areas:
+    "hero hero"
+    "events photos";
+  gap: 0.9rem;
+  padding: 0.9rem;
+  overflow: hidden;
+}
+
+.panel {
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  border-radius: 16px;
+  padding: 0.8rem;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+}
+
+.panel-hero {
+  grid-area: hero;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.panel-events {
+  grid-area: events;
+  overflow: hidden;
+}
+
+.panel-photos {
+  grid-area: photos;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.section-title {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-cold);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.hero-main {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(500px, 1.5fr) minmax(340px, 1.05fr);
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.hero-clock {
+  justify-self: start;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.22rem;
+}
+
+.clock {
+  font-family: "Space Mono", monospace;
+  font-size: clamp(3.2rem, 6.8vw, 6.3rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.date {
+  color: var(--text-muted);
+  font-size: clamp(1.16rem, 2vw, 2.05rem);
+  font-weight: 600;
+}
+
+.hero-now {
+  justify-self: stretch;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.05rem;
+}
+
+.hero-now-icon {
+  font-size: clamp(3.6rem, 7.2vw, 6.8rem);
+  line-height: 1;
+}
+
+.hero-temp {
+  font-family: "Space Mono", monospace;
+  font-size: clamp(2.2rem, 4.6vw, 4.2rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hero-desc {
+  color: var(--text-main);
+  font-size: clamp(1.18rem, 2vw, 1.8rem);
+  font-weight: 700;
+}
+
+.hero-now-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.weather-meta {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.hero-forecast-wrap {
+  justify-self: end;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.weather-forecast {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+}
+
+.forecast-row {
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 12px;
+  padding: 0.42rem 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.forecast-row-main {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.forecast-row-day {
+  color: var(--text-main);
+  font-size: 1rem;
+  font-weight: 700;
+  width: 2.2rem;
+}
+
+.forecast-row-icon {
+  font-size: 1.95rem;
+  line-height: 1;
+}
+
+.forecast-row-temp {
+  font-family: "Space Mono", monospace;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.forecast-row-temp span {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-left: 0.2rem;
+}
+
+.event-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.54rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.54rem;
+}
+
+.event-item {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 0.62rem;
+  padding: 0.6rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.event-day {
+  font-size: 0.81rem;
+  font-weight: 700;
+}
+
+.event-time {
+  font-size: 0.81rem;
+  color: var(--text-muted);
+}
+
+.event-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+}
+
+.event-title {
+  font-size: 0.94rem;
+  font-weight: 600;
+}
+
+.event-location {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.event-calendar-badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.14rem 0.48rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.placeholder {
+  color: var(--text-muted);
+}
+
+.photo-frame {
+  margin-top: 0.62rem;
+  flex: 1;
+  min-height: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+}
+
+#photo {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: contain;
+  object-position: center center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.photo-caption {
+  min-height: 2rem;
+  padding: 0.56rem 0.72rem;
+  background: rgba(0, 0, 0, 0.45);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 1360px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "hero"
+      "photos"
+      "events";
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .hero-main {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .hero-clock,
+  .hero-forecast-wrap {
+    justify-self: center;
+    text-align: center;
+  }
+
+  .hero-now {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .weather-forecast {
+    width: min(520px, 100%);
+  }
+}

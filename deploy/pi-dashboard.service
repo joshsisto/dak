@@ -1,0 +1,16 @@
+[Unit]
+Description=Pi Dashboard Flask App
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/pi-dashboard
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/home/pi/pi-dashboard/.venv/bin/python -m app.main
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

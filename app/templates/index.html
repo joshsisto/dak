@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pi Wallboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <div class="background-gradient"></div>
+    <main class="layout">
+      <section class="panel panel-hero">
+        <div class="hero-main">
+          <div class="hero-clock">
+            <div class="clock" id="clock">--:--:--</div>
+            <div class="date" id="date">Loading date…</div>
+          </div>
+
+          <div class="hero-now">
+            <div class="hero-now-icon" id="weather-icon">•</div>
+            <div class="hero-now-text">
+              <div class="hero-temp" id="weather-temp">--</div>
+              <div class="hero-desc" id="weather-desc">Loading weather…</div>
+              <div class="weather-meta" id="weather-meta"></div>
+            </div>
+          </div>
+
+          <div class="hero-forecast-wrap">
+            <div class="section-title">Forecast</div>
+            <div class="weather-forecast" id="weather-forecast"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel-events">
+        <div class="section-title">Upcoming Events (Combined)</div>
+        <ul class="event-list" id="event-list">
+          <li class="placeholder">Loading calendar…</li>
+        </ul>
+      </section>
+
+      <section class="panel panel-photos">
+        <div class="section-title">Shared Album</div>
+        <div class="photo-frame">
+          <img id="photo" alt="Shared album photo">
+          <div class="photo-caption" id="photo-caption"></div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const REFRESH_MS = {{ settings.data_refresh_seconds }} * 1000;
+      const SLIDESHOW_MS = {{ settings.slideshow_interval_seconds }} * 1000;
+      const DISPLAY_TIMEZONE = "{{ settings.display_timezone }}";
+
+      let photos = [];
+      let photoIndex = 0;
+      let serverEpochBaseMs = Date.now();
+      let perfBaseMs = performance.now();
+      let activeTimezone = DISPLAY_TIMEZONE;
+      const BADGE_PALETTE = [
+        ["#58d7ff", "#07243a"],
+        ["#ffb347", "#2a1500"],
+        ["#8be38f", "#08270c"],
+        ["#ff88ba", "#300018"],
+        ["#c7a4ff", "#240a45"],
+        ["#ffe26f", "#2a2100"],
+        ["#ff9a7b", "#2f0e00"],
+        ["#9de4d6", "#072620"]
+      ];
+
+      function escapeHtml(value) {
+        if (value == null) {
+          return "";
+        }
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function setServerClock(epochMs) {
+        if (typeof epochMs !== "number" || Number.isNaN(epochMs)) {
+          return;
+        }
+        serverEpochBaseMs = epochMs;
+        perfBaseMs = performance.now();
+      }
+
+      function nowFromServer() {
+        const elapsed = performance.now() - perfBaseMs;
+        return new Date(serverEpochBaseMs + elapsed);
+      }
+
+      function badgeColorsForCalendar(calendarName) {
+        const text = String(calendarName || "").trim();
+        if (!text) {
+          return BADGE_PALETTE[0];
+        }
+        let hash = 0;
+        for (let index = 0; index < text.length; index += 1) {
+          hash = (hash * 31 + text.charCodeAt(index)) % 2147483647;
+        }
+        return BADGE_PALETTE[Math.abs(hash) % BADGE_PALETTE.length];
+      }
+
+      function eventMarkup(event) {
+        const location = event.location ? `<div class="event-location">${escapeHtml(event.location)}</div>` : "";
+        let badge = "";
+        if (event.calendar_name) {
+          const [bg, fg] = badgeColorsForCalendar(event.calendar_name);
+          badge = `<span class="event-calendar-badge" style="background:${bg};color:${fg}">${escapeHtml(event.calendar_name)}</span>`;
+        }
+        return `
+          <div class="event-when">
+            <div class="event-day">${escapeHtml(event.day_label)}</div>
+            <div class="event-time">${escapeHtml(event.time_label)}</div>
+          </div>
+          <div class="event-main">
+            <div class="event-title-wrap">
+              <div class="event-title">${escapeHtml(event.title)}</div>
+              ${badge}
+            </div>
+            ${location}
+          </div>
+        `;
+      }
+
+      function formatClock() {
+        const now = nowFromServer();
+        const clock = new Intl.DateTimeFormat("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+          timeZone: activeTimezone
+        }).format(now);
+        const date = new Intl.DateTimeFormat("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          timeZone: activeTimezone
+        }).format(now);
+        document.getElementById("clock").textContent = clock;
+        document.getElementById("date").textContent = date;
+      }
+
+      function renderTimeStatus(timePayload) {
+        if (timePayload && timePayload.server_epoch_ms) {
+          setServerClock(timePayload.server_epoch_ms);
+        }
+        if (timePayload && timePayload.timezone) {
+          activeTimezone = timePayload.timezone;
+        } else {
+          activeTimezone = DISPLAY_TIMEZONE;
+        }
+      }
+
+      function renderEvents(events) {
+        const list = document.getElementById("event-list");
+        list.innerHTML = "";
+        if (!events || events.length === 0) {
+          list.innerHTML = '<li class="placeholder">No upcoming events in range.</li>';
+          return;
+        }
+        for (const event of events) {
+          const row = document.createElement("li");
+          row.className = "event-item";
+          row.innerHTML = eventMarkup(event);
+          list.appendChild(row);
+        }
+      }
+
+      function renderWeather(weather) {
+        const current = weather?.current || {};
+        const unit = weather?.temperature_unit || "";
+        const windUnit = weather?.wind_speed_unit || "";
+        document.getElementById("weather-icon").textContent = current.icon || "•";
+        document.getElementById("weather-temp").textContent =
+          current.temperature != null ? `${Math.round(current.temperature)}${unit}` : "--";
+        document.getElementById("weather-desc").textContent = current.description || "Unavailable";
+        document.getElementById("weather-meta").textContent =
+          current.feels_like != null
+            ? `Feels like ${Math.round(current.feels_like)}${unit} • Wind ${Math.round(current.wind_speed || 0)} ${windUnit}`
+            : "";
+
+        const forecast = document.getElementById("weather-forecast");
+        forecast.innerHTML = "";
+        const forecastDays = (weather?.daily || []).slice(0, 4);
+        for (const day of forecastDays) {
+          const row = document.createElement("div");
+          row.className = "forecast-row";
+          row.innerHTML = `
+            <div class="forecast-row-main">
+              <div class="forecast-row-day">${day.day_label}</div>
+              <div class="forecast-row-icon">${day.icon}</div>
+            </div>
+            <div class="forecast-row-temp">${Math.round(day.high)}°<span>/${Math.round(day.low)}°</span></div>
+          `;
+          forecast.appendChild(row);
+        }
+      }
+
+      function renderCurrentPhoto() {
+        const image = document.getElementById("photo");
+        const caption = document.getElementById("photo-caption");
+        if (!photos.length) {
+          image.removeAttribute("src");
+          caption.textContent = "No photos available.";
+          return;
+        }
+        if (photoIndex >= photos.length) {
+          photoIndex = 0;
+        }
+        const current = photos[photoIndex];
+        image.src = current.url;
+        caption.textContent = current.caption || "";
+      }
+
+      function advancePhoto() {
+        if (!photos.length) {
+          return;
+        }
+        photoIndex = (photoIndex + 1) % photos.length;
+        renderCurrentPhoto();
+      }
+
+      async function refreshDashboard() {
+        try {
+          const response = await fetch("/api/dashboard");
+          const payload = await response.json();
+          const calendars = payload.calendars || {};
+          renderTimeStatus(payload.time || {});
+          renderEvents(calendars.combined || payload.calendar || []);
+          renderWeather(payload.weather || {});
+          photos = payload.photos || [];
+          photoIndex = 0;
+          renderCurrentPhoto();
+        } catch (error) {
+          console.error("Dashboard refresh failed", error);
+        }
+      }
+
+      formatClock();
+      setInterval(formatClock, 1000);
+      refreshDashboard();
+      setInterval(refreshDashboard, REFRESH_MS);
+      setInterval(advancePhoto, SLIDESHOW_MS);
+    </script>
+  </body>
+</html>
