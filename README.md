@@ -8,7 +8,7 @@ Current MVP features:
 - Calendar ICS caching (12-hour default) to reduce iCloud requests
 - Human-readable calendar event export file
 - Server-time clock with seconds (NTP-backed on host OS)
-- Weather from Open-Meteo (current + forecast + humidity + AQI + sunrise/sunset + moon phase)
+- Weather from Open-Meteo (current + forecast + humidity + AQI + sunrise/sunset) plus an advanced lunar panel (phase, cycle, illumination, distance, and NASA moon imagery)
 - Shared photos from:
   - iCloud Shared Album public URL, or
   - local directory fallback
@@ -53,6 +53,7 @@ python -m app.main
 - `CALENDAR_EVENTS_TEXT_FILE`: output text file for readable event export.
 - `DISPLAY_TIMEZONE`: timezone used for event labels and displayed clock.
 - `WEATHER_LATITUDE` / `WEATHER_LONGITUDE`: your location for weather.
+- `MOON_CACHE_DIRECTORY`: where converted NASA moon imagery is cached.
 - `PHOTOS_SOURCE`: `icloud_shared_album` or `directory`.
 - `ICLOUD_SHARED_ALBUM_URL`: required for iCloud photos.
 - `PHOTOS_DIRECTORY`: used when `PHOTOS_SOURCE=directory` or as fallback.

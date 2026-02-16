@@ -85,6 +85,12 @@ def create_app() -> Flask:
             abort(404)
         return send_from_directory(str(settings.photos_directory), filename)
 
+    @app.get("/moon-cache/<path:filename>")
+    def moon_cache(filename: str):
+        if not settings.moon_cache_directory.exists():
+            abort(404)
+        return send_from_directory(str(settings.moon_cache_directory), filename)
+
     return app
 
 

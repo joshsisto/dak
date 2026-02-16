@@ -79,15 +79,15 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--accent-cold);
-  font-size: 0.76rem;
-  font-weight: 700;
+  font-size: 1.32rem;
+  font-weight: 800;
 }
 
 .hero-main {
   display: grid;
-  grid-template-columns: minmax(310px, 0.9fr) minmax(390px, 1.15fr) minmax(320px, 1.05fr) minmax(370px, 1.2fr);
+  grid-template-columns: minmax(280px, 0.82fr) minmax(330px, 1.0fr) minmax(210px, 0.62fr) minmax(330px, 0.98fr) minmax(410px, 1.2fr);
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.78rem;
 }
 
 .hero-clock {
@@ -118,27 +118,27 @@ body {
   justify-self: stretch;
   text-align: left;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 0.82rem;
+  gap: 0.95rem;
 }
 
 .hero-now-icon {
-  font-size: clamp(3.3rem, 6.2vw, 5.8rem);
+  font-size: clamp(3.5rem, 6.6vw, 6rem);
   line-height: 1;
 }
 
 .hero-temp {
   font-family: "Space Mono", monospace;
-  font-size: clamp(2.0rem, 3.9vw, 3.5rem);
+  font-size: clamp(2.2rem, 4.2vw, 3.8rem);
   font-weight: 700;
   line-height: 1;
 }
 
 .hero-desc {
   color: var(--text-main);
-  font-size: clamp(1.08rem, 1.55vw, 1.45rem);
-  font-weight: 700;
+  font-size: clamp(1.44rem, 2.1vw, 1.96rem);
+  font-weight: 800;
 }
 
 .hero-now-text {
@@ -149,26 +149,39 @@ body {
 
 .weather-meta {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 1.26rem;
+  font-weight: 700;
 }
 
 .weather-extra {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.26rem;
-  margin-top: 0.1rem;
+  flex-direction: column;
+  gap: 0.24rem;
+  margin-top: 0.24rem;
 }
 
-.weather-chip {
-  display: inline-flex;
+.weather-detail-row {
+  display: flex;
   align-items: center;
-  font-size: 0.78rem;
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.1);
+  justify-content: space-between;
+  gap: 0.48rem;
+  padding: 0.26rem 0.58rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-  padding: 0.1rem 0.45rem;
-  white-space: nowrap;
+}
+
+.weather-detail-label {
+  color: var(--text-muted);
+  font-size: 1.24rem;
+  font-weight: 800;
+}
+
+.weather-detail-value {
+  color: var(--text-main);
+  font-size: 1.34rem;
+  font-weight: 800;
+  text-align: right;
 }
 
 .hero-forecast-wrap {
@@ -201,36 +214,165 @@ body {
 
 .forecast-card-day {
   color: var(--text-main);
-  font-size: 1.08rem;
+  font-size: 1.2rem;
   font-weight: 700;
   line-height: 1;
 }
 
 .forecast-card-icon {
-  font-size: 2.9rem;
+  font-size: 3.2rem;
   line-height: 1;
   margin: 0.22rem 0 0.26rem;
 }
 
 .forecast-card-temp {
   font-family: "Space Mono", monospace;
-  font-size: 1.62rem;
+  font-size: 1.78rem;
   font-weight: 700;
   line-height: 1;
 }
 
 .forecast-card-temp span {
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 1.02rem;
   margin-left: 0.16rem;
 }
 
 .hero-mini-calendar {
-  justify-self: stretch;
-  min-width: 0;
+  justify-self: center;
+  width: min(100%, 265px);
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
+  gap: 0.35rem;
+}
+
+.hero-moon {
+  justify-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.26rem 0.36rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hero-moon-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.moon-cycle-state {
+  color: var(--text-muted);
+  font-family: "Space Mono", monospace;
+  font-size: 1.06rem;
+  font-weight: 700;
+}
+
+.moon-content {
+  display: grid;
+  grid-template-columns: minmax(118px, 148px) minmax(0, 1fr);
+  gap: 0.48rem;
+  align-items: stretch;
+}
+
+.moon-photo-wrap {
+  position: relative;
+  width: min(100%, 148px);
+  justify-self: start;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.03) 45%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+#moon-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.moon-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4.6rem;
+}
+
+.moon-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.26rem;
+}
+
+.moon-stat {
+  min-height: 2.15rem;
+  padding: 0.28rem 0.36rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.moon-stat-label {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.moon-stat-value {
+  color: var(--text-main);
+  font-size: 1.08rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.moon-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.moon-progress-track {
+  height: 0.56rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.moon-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7fc6ff, #f2f6ff 56%, #ffde9a);
+}
+
+.moon-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.moon-caption {
+  color: var(--text-main);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .hero-mini-calendar-head {
@@ -242,7 +384,8 @@ body {
 
 .mini-month-label {
   font-family: "Space Mono", monospace;
-  font-size: 0.9rem;
+  font-size: 1.34rem;
+  font-weight: 800;
   color: var(--text-main);
   white-space: nowrap;
 }
@@ -256,8 +399,8 @@ body {
 .mini-weekday {
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 1.12rem;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
@@ -268,13 +411,15 @@ body {
 }
 
 .mini-day {
-  height: 1.35rem;
+  aspect-ratio: 1 / 1;
+  min-height: 2.15rem;
   border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: "Space Mono", monospace;
-  font-size: 0.76rem;
+  font-size: 1.24rem;
+  font-weight: 800;
   color: var(--text-main);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -294,29 +439,32 @@ body {
 .event-list {
   list-style: none;
   padding: 0;
-  margin: 0.54rem 0 0;
+  margin: 0.44rem 0 0;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.46rem;
 }
 
 .event-item {
   display: grid;
-  grid-template-columns: 126px 1fr;
-  gap: 0.72rem;
-  padding: 0.72rem;
+  grid-template-columns: 162px 1fr;
+  gap: 0.82rem;
+  padding: 0.56rem 0.84rem;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .event-day {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1.28rem;
+  font-weight: 800;
+  line-height: 1.05;
 }
 
 .event-time {
-  font-size: 0.95rem;
+  font-size: 1.24rem;
+  font-weight: 800;
+  line-height: 1.05;
   color: var(--text-muted);
 }
 
@@ -328,21 +476,25 @@ body {
 }
 
 .event-title {
-  font-size: 1.15rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.08;
 }
 
 .event-location {
-  font-size: 0.95rem;
+  font-size: 1.16rem;
+  font-weight: 700;
   color: var(--text-muted);
   margin-top: 0.08rem;
+  line-height: 1.08;
 }
 
 .event-calendar-badge {
-  font-size: 0.8rem;
+  font-size: 1.02rem;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 0.16rem 0.56rem;
+  padding: 0.12rem 0.56rem;
   border-radius: 999px;
   white-space: nowrap;
 }
@@ -374,10 +526,10 @@ body {
 }
 
 .photo-caption {
-  min-height: 2rem;
+  min-height: 2.35rem;
   padding: 0.56rem 0.72rem;
   background: rgba(0, 0, 0, 0.45);
-  font-size: 0.82rem;
+  font-size: 1rem;
   color: var(--text-muted);
 }
 
@@ -400,7 +552,8 @@ body {
 
   .hero-clock,
   .hero-forecast-wrap,
-  .hero-mini-calendar {
+  .hero-mini-calendar,
+  .hero-moon {
     justify-self: center;
     text-align: center;
   }
@@ -408,6 +561,19 @@ body {
   .hero-now {
     justify-content: center;
     text-align: center;
+  }
+
+  .moon-content {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .moon-photo-wrap {
+    justify-self: center;
+  }
+
+  .moon-stats {
+    width: min(520px, 100%);
   }
 
   .weather-forecast {

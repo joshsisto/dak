@@ -30,6 +30,7 @@ class Settings:
     weather_temperature_unit: str
     weather_wind_speed_unit: str
     weather_timezone: str
+    moon_cache_directory: Path
     photos_source: str
     photos_directory: Path
     photos_limit: int
@@ -66,6 +67,9 @@ class Settings:
             weather_temperature_unit=os.getenv("WEATHER_TEMPERATURE_UNIT", "fahrenheit").strip(),
             weather_wind_speed_unit=os.getenv("WEATHER_WIND_SPEED_UNIT", "mph").strip(),
             weather_timezone=os.getenv("WEATHER_TIMEZONE", "auto").strip(),
+            moon_cache_directory=Path(
+                os.getenv("MOON_CACHE_DIRECTORY", "./data/cache/moon")
+            ).expanduser(),
             photos_source=os.getenv("PHOTOS_SOURCE", "directory").strip().lower(),
             photos_directory=Path(os.getenv("PHOTOS_DIRECTORY", "./photos")).expanduser(),
             photos_limit=int(os.getenv("PHOTOS_LIMIT", "50")),

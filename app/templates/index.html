@@ -38,6 +38,33 @@
             <div class="mini-days-grid" id="mini-days-grid"></div>
           </div>
 
+          <div class="hero-moon">
+            <div class="hero-moon-head">
+              <div class="section-title">Advanced Lunar</div>
+              <div class="moon-cycle-state" id="moon-cycle-state">Loading cycle…</div>
+            </div>
+            <div class="moon-content">
+              <div class="moon-photo-wrap">
+                <img id="moon-photo" alt="Moon phase">
+                <div class="moon-fallback" id="moon-fallback">🌙</div>
+              </div>
+              <div class="moon-stats" id="moon-stats"></div>
+            </div>
+            <div class="moon-progress">
+              <div class="moon-progress-track">
+                <div class="moon-progress-fill" id="moon-progress-fill"></div>
+              </div>
+              <div class="moon-progress-labels">
+                <span>🌑</span>
+                <span>🌓</span>
+                <span>🌕</span>
+                <span>🌗</span>
+                <span>🌑</span>
+              </div>
+            </div>
+            <div class="moon-caption" id="moon-caption">Loading moon data…</div>
+          </div>
+
           <div class="hero-forecast-wrap">
             <div class="section-title">Forecast</div>
             <div class="weather-forecast" id="weather-forecast"></div>
@@ -92,6 +119,16 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#39;");
+      }
+
+      function formatNumber(value, decimals = 0) {
+        if (value == null || Number.isNaN(Number(value))) {
+          return "";
+        }
+        return Number(value).toLocaleString(undefined, {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        });
       }
 
       function setServerClock(epochMs) {
@@ -236,43 +273,129 @@
             ? `Feels like ${Math.round(current.feels_like)}${unit} • Wind ${Math.round(current.wind_speed || 0)} ${windUnit}`
             : "";
 
-        const detailsParts = [];
+        const detailsRows = [];
         if (details.humidity != null) {
-          detailsParts.push(`Humidity ${Math.round(details.humidity)}%`);
+          detailsRows.push({ label: "Humidity", value: `${Math.round(details.humidity)}%` });
         }
         if (details.air_quality_index != null) {
-          detailsParts.push(`AQI ${details.air_quality_index} (${details.air_quality_label || "Unknown"})`);
+          detailsRows.push({
+            label: "AQI",
+            value: `${details.air_quality_index} (${details.air_quality_label || "Unknown"})`
+          });
         }
         if (details.sunrise) {
-          detailsParts.push(`Sunrise ${details.sunrise}`);
+          detailsRows.push({ label: "Sunrise", value: details.sunrise });
         }
         if (details.sunset) {
-          detailsParts.push(`Sunset ${details.sunset}`);
-        }
-        if (details.moon_phase) {
-          const icon = details.moon_icon || "";
-          detailsParts.push(`Moon ${icon} ${details.moon_phase}`.trim());
+          detailsRows.push({ label: "Sunset", value: details.sunset });
         }
 
         const detailsEl = document.getElementById("weather-extra");
         detailsEl.innerHTML = "";
-        for (const part of detailsParts) {
-          const chip = document.createElement("span");
-          chip.className = "weather-chip";
-          chip.textContent = part;
-          detailsEl.appendChild(chip);
+        for (const item of detailsRows) {
+          const row = document.createElement("div");
+          row.className = "weather-detail-row";
+          row.innerHTML = `
+            <span class="weather-detail-label">${escapeHtml(item.label)}</span>
+            <span class="weather-detail-value">${escapeHtml(item.value)}</span>
+          `;
+          detailsEl.appendChild(row);
+        }
+
+        const moonPhoto = document.getElementById("moon-photo");
+        const moonFallback = document.getElementById("moon-fallback");
+        const moonCaption = document.getElementById("moon-caption");
+        const moonCycleState = document.getElementById("moon-cycle-state");
+        const moonProgressFill = document.getElementById("moon-progress-fill");
+        const moonStats = document.getElementById("moon-stats");
+        const moonIcon = details.moon_icon || "🌙";
+        const moonPhase = details.moon_phase || "Moon phase";
+        const moonIllumination =
+          details.moon_illumination != null ? `${details.moon_illumination}% illuminated` : "";
+        const moonAge =
+          details.moon_age_days != null ? `Day ${formatNumber(details.moon_age_days, 1)}` : "";
+        const moonDirection = details.moon_cycle_direction || "";
+        const moonNextPhase = details.moon_next_phase || "";
+        const moonDaysUntilNext =
+          details.moon_days_until_next_phase != null
+            ? `${formatNumber(details.moon_days_until_next_phase, 1)}d`
+            : "";
+
+        moonCycleState.textContent = [moonDirection, moonAge].filter(Boolean).join(" • ") || "Lunar cycle";
+        moonCaption.textContent = [
+          moonPhase,
+          moonIllumination,
+          moonNextPhase && moonDaysUntilNext
+            ? `Next ${moonNextPhase} in ${moonDaysUntilNext}`
+            : ""
+        ].filter(Boolean).join(" • ");
+
+        const cycleProgress = Number(details.moon_cycle_progress);
+        moonProgressFill.style.width = Number.isFinite(cycleProgress)
+          ? `${Math.max(0, Math.min(100, cycleProgress))}%`
+          : "0%";
+
+        const moonStatRows = [];
+        if (details.moon_illumination != null) {
+          moonStatRows.push({ label: "Illumination", value: `${formatNumber(details.moon_illumination)}%` });
+        }
+        if (details.moon_age_days != null) {
+          moonStatRows.push({ label: "Lunar Age", value: `${formatNumber(details.moon_age_days, 1)} days` });
+        }
+        if (details.moon_distance_km != null) {
+          moonStatRows.push({ label: "Distance", value: `${formatNumber(details.moon_distance_km)} km` });
+        }
+        if (details.moon_angular_diameter_arcsec != null) {
+          moonStatRows.push({
+            label: "Angular Size",
+            value: `${formatNumber(details.moon_angular_diameter_arcsec, 1)} arcsec`
+          });
+        }
+        if (details.moon_phase_angle_deg != null) {
+          moonStatRows.push({ label: "Phase Angle", value: `${formatNumber(details.moon_phase_angle_deg, 1)}°` });
+        }
+        if (moonNextPhase && moonDaysUntilNext) {
+          moonStatRows.push({ label: "Next Phase", value: `${moonNextPhase} (${moonDaysUntilNext})` });
+        }
+
+        moonStats.innerHTML = "";
+        for (const item of moonStatRows.slice(0, 6)) {
+          const row = document.createElement("div");
+          row.className = "moon-stat";
+          row.innerHTML = `
+            <span class="moon-stat-label">${escapeHtml(item.label)}</span>
+            <span class="moon-stat-value">${escapeHtml(item.value)}</span>
+          `;
+          moonStats.appendChild(row);
+        }
+
+        if (details.moon_image_url) {
+          const imageKey = details.moon_image_key || "";
+          const imageUrl = imageKey
+            ? `${details.moon_image_url}${details.moon_image_url.includes("?") ? "&" : "?"}v=${encodeURIComponent(imageKey)}`
+            : details.moon_image_url;
+          moonPhoto.src = imageUrl;
+          moonPhoto.style.display = "block";
+          moonFallback.style.display = "none";
+        } else {
+          moonPhoto.removeAttribute("src");
+          moonPhoto.style.display = "none";
+          moonFallback.textContent = moonIcon;
+          moonFallback.style.display = "flex";
         }
 
         const forecast = document.getElementById("weather-forecast");
         forecast.innerHTML = "";
         const forecastDays = (weather?.daily || []).slice(0, 4);
         for (const day of forecastDays) {
+          const high = day.high != null ? Math.round(day.high) : "--";
+          const low = day.low != null ? Math.round(day.low) : "--";
           const card = document.createElement("div");
           card.className = "forecast-card";
           card.innerHTML = `
             <div class="forecast-card-day">${day.day_label}</div>
             <div class="forecast-card-icon">${day.icon}</div>
-            <div class="forecast-card-temp">${Math.round(day.high)}°<span>/${Math.round(day.low)}°</span></div>
+            <div class="forecast-card-temp">${high}°<span>/${low}°</span></div>
           `;
           forecast.appendChild(card);
         }
