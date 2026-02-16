@@ -28,6 +28,15 @@
             </div>
           </div>
 
+          <div class="hero-mini-calendar">
+            <div class="hero-mini-calendar-head">
+              <div class="section-title">Calendar</div>
+              <div class="mini-month-label" id="mini-month-label">Month</div>
+            </div>
+            <div class="mini-weekdays" id="mini-weekdays"></div>
+            <div class="mini-days-grid" id="mini-days-grid"></div>
+          </div>
+
           <div class="hero-forecast-wrap">
             <div class="section-title">Forecast</div>
             <div class="weather-forecast" id="weather-forecast"></div>
@@ -176,6 +185,42 @@
         }
       }
 
+      function renderMiniCalendar(monthView) {
+        const monthLabel = document.getElementById("mini-month-label");
+        const weekdays = document.getElementById("mini-weekdays");
+        const daysGrid = document.getElementById("mini-days-grid");
+
+        const weekdayLabels = monthView?.weekday_labels || ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        weekdays.innerHTML = "";
+        for (const day of weekdayLabels) {
+          const cell = document.createElement("div");
+          cell.className = "mini-weekday";
+          cell.textContent = day.slice(0, 1);
+          weekdays.appendChild(cell);
+        }
+
+        if (!monthView || !Array.isArray(monthView.cells)) {
+          monthLabel.textContent = "Calendar";
+          daysGrid.innerHTML = "";
+          return;
+        }
+
+        monthLabel.textContent = monthView.month_label || "Current Month";
+        daysGrid.innerHTML = "";
+        for (const dayCell of monthView.cells) {
+          const cell = document.createElement("div");
+          cell.className = "mini-day";
+          if (!dayCell.in_month) {
+            cell.classList.add("is-outside");
+          }
+          if (dayCell.is_today) {
+            cell.classList.add("is-today");
+          }
+          cell.textContent = dayCell.day;
+          daysGrid.appendChild(cell);
+        }
+      }
+
       function renderWeather(weather) {
         const current = weather?.current || {};
         const unit = weather?.temperature_unit || "";
@@ -234,6 +279,7 @@
           const payload = await response.json();
           const calendars = payload.calendars || {};
           renderTimeStatus(payload.time || {});
+          renderMiniCalendar(calendars.month_view || {});
           renderEvents(calendars.combined || payload.calendar || []);
           renderWeather(payload.weather || {});
           photos = payload.photos || [];
