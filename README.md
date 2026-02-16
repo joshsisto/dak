@@ -8,7 +8,7 @@ Current MVP features:
 - Calendar ICS caching (12-hour default) to reduce iCloud requests
 - Human-readable calendar event export file
 - Server-time clock with seconds (NTP-backed on host OS)
-- Weather from Open-Meteo
+- Weather from Open-Meteo (current + forecast + humidity + AQI + sunrise/sunset + moon phase)
 - Shared photos from:
   - iCloud Shared Album public URL, or
   - local directory fallback

@@ -25,6 +25,7 @@
               <div class="hero-temp" id="weather-temp">--</div>
               <div class="hero-desc" id="weather-desc">Loading weather…</div>
               <div class="weather-meta" id="weather-meta"></div>
+              <div class="weather-extra" id="weather-extra"></div>
             </div>
           </div>
 
@@ -223,6 +224,7 @@
 
       function renderWeather(weather) {
         const current = weather?.current || {};
+        const details = weather?.details || {};
         const unit = weather?.temperature_unit || "";
         const windUnit = weather?.wind_speed_unit || "";
         document.getElementById("weather-icon").textContent = current.icon || "•";
@@ -233,6 +235,33 @@
           current.feels_like != null
             ? `Feels like ${Math.round(current.feels_like)}${unit} • Wind ${Math.round(current.wind_speed || 0)} ${windUnit}`
             : "";
+
+        const detailsParts = [];
+        if (details.humidity != null) {
+          detailsParts.push(`Humidity ${Math.round(details.humidity)}%`);
+        }
+        if (details.air_quality_index != null) {
+          detailsParts.push(`AQI ${details.air_quality_index} (${details.air_quality_label || "Unknown"})`);
+        }
+        if (details.sunrise) {
+          detailsParts.push(`Sunrise ${details.sunrise}`);
+        }
+        if (details.sunset) {
+          detailsParts.push(`Sunset ${details.sunset}`);
+        }
+        if (details.moon_phase) {
+          const icon = details.moon_icon || "";
+          detailsParts.push(`Moon ${icon} ${details.moon_phase}`.trim());
+        }
+
+        const detailsEl = document.getElementById("weather-extra");
+        detailsEl.innerHTML = "";
+        for (const part of detailsParts) {
+          const chip = document.createElement("span");
+          chip.className = "weather-chip";
+          chip.textContent = part;
+          detailsEl.appendChild(chip);
+        }
 
         const forecast = document.getElementById("weather-forecast");
         forecast.innerHTML = "";

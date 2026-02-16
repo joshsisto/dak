@@ -152,6 +152,25 @@ body {
   font-size: 0.9rem;
 }
 
+.weather-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.26rem;
+  margin-top: 0.1rem;
+}
+
+.weather-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  white-space: nowrap;
+}
+
 .hero-forecast-wrap {
   justify-self: end;
   text-align: left;
