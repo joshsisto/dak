@@ -95,6 +95,15 @@ sudo systemctl status pi-dashboard-kiosk
 sudo journalctl -u pi-dashboard-kiosk -f
 ```
 
+If the Pi boots to desktop but Chromium does not auto-open:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart pi-dashboard
+sudo systemctl restart pi-dashboard-kiosk
+sudo systemctl status pi-dashboard-kiosk --no-pager
+```
+Also ensure desktop auto-login is enabled for the same `APP_USER` used by the install script.
+
 ## API Notes
 - `/api/dashboard` returns:
   - `calendars.combined`: upcoming merged events (used by UI)
