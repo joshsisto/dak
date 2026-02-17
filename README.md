@@ -102,6 +102,15 @@ sudo journalctl -u pi-dashboard-kiosk -f
   - `calendars.month_view`: month grid payload (returned, currently hidden in UI)
   - `time`: server clock snapshot and NTP sync status
 
+## Auto-Update Behavior
+- Clock/time display updates every second in-browser (no page reload).
+- Dashboard data refresh runs every `DATA_REFRESH_SECONDS` (default `300` seconds / 5 minutes).
+- Calendar events are also pruned client-side every 15 seconds, so events disappear shortly after they end.
+- Mini month calendar "today" highlight updates continuously; crossing midnight triggers an automatic dashboard data refresh.
+- Weather/forecast/AQI/sunrise/sunset update on each dashboard data refresh.
+- Moon details update on each dashboard data refresh; NASA moon image metadata is refreshed hourly and cached to disk.
+- Photo slideshow advances every `SLIDESHOW_INTERVAL_SECONDS`; the photo source list is refreshed on each dashboard data refresh.
+
 ## Calendar Cache + Export
 - Calendar ICS URLs are fetched at most once per cache window (`CALENDAR_CACHE_SECONDS`, default 12 hours).
 - On network failure, stale cached ICS is used when available.

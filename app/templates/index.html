@@ -98,6 +98,10 @@
       let serverEpochBaseMs = Date.now();
       let perfBaseMs = performance.now();
       let activeTimezone = DISPLAY_TIMEZONE;
+      let currentCombinedEvents = [];
+      let lastDateKey = "";
+      let isRefreshing = false;
+      let refreshQueued = false;
       const BADGE_PALETTE = [
         ["#58d7ff", "#07243a"],
         ["#ffb347", "#2a1500"],
@@ -142,6 +146,22 @@
       function nowFromServer() {
         const elapsed = performance.now() - perfBaseMs;
         return new Date(serverEpochBaseMs + elapsed);
+      }
+
+      function localDateKey(dateValue = nowFromServer()) {
+        const parts = new Intl.DateTimeFormat("en-CA", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          timeZone: activeTimezone
+        }).formatToParts(dateValue);
+        const map = {};
+        for (const part of parts) {
+          if (part.type !== "literal") {
+            map[part.type] = part.value;
+          }
+        }
+        return `${map.year || "0000"}-${map.month || "00"}-${map.day || "00"}`;
       }
 
       function badgeColorsForCalendar(calendarName) {
@@ -195,6 +215,13 @@
         }).format(now);
         document.getElementById("clock").textContent = clock;
         document.getElementById("date").textContent = date;
+
+        const dateKey = localDateKey(now);
+        updateMiniCalendarToday(dateKey);
+        if (lastDateKey && dateKey !== lastDateKey) {
+          refreshDashboard();
+        }
+        lastDateKey = dateKey;
       }
 
       function renderTimeStatus(timePayload) {
@@ -248,6 +275,9 @@
         for (const dayCell of monthView.cells) {
           const cell = document.createElement("div");
           cell.className = "mini-day";
+          if (dayCell.date) {
+            cell.dataset.date = dayCell.date;
+          }
           if (!dayCell.in_month) {
             cell.classList.add("is-outside");
           }
@@ -256,6 +286,36 @@
           }
           cell.textContent = dayCell.day;
           daysGrid.appendChild(cell);
+        }
+        updateMiniCalendarToday(localDateKey());
+      }
+
+      function updateMiniCalendarToday(dateKey) {
+        const cells = document.querySelectorAll(".mini-day");
+        for (const cell of cells) {
+          if (cell.dataset.date === dateKey) {
+            cell.classList.add("is-today");
+          } else {
+            cell.classList.remove("is-today");
+          }
+        }
+      }
+
+      function pruneExpiredEvents() {
+        if (!currentCombinedEvents.length) {
+          return;
+        }
+        const nowMs = nowFromServer().getTime();
+        const filtered = currentCombinedEvents.filter((event) => {
+          const endMs = Date.parse(event.end_iso || "");
+          if (Number.isNaN(endMs)) {
+            return true;
+          }
+          return endMs >= nowMs;
+        });
+        if (filtered.length !== currentCombinedEvents.length) {
+          currentCombinedEvents = filtered;
+          renderEvents(currentCombinedEvents);
         }
       }
 
@@ -426,19 +486,39 @@
       }
 
       async function refreshDashboard() {
+        if (isRefreshing) {
+          refreshQueued = true;
+          return;
+        }
+        isRefreshing = true;
         try {
           const response = await fetch("/api/dashboard");
           const payload = await response.json();
           const calendars = payload.calendars || {};
           renderTimeStatus(payload.time || {});
+          currentCombinedEvents = calendars.combined || payload.calendar || [];
           renderMiniCalendar(calendars.month_view || {});
-          renderEvents(calendars.combined || payload.calendar || []);
+          renderEvents(currentCombinedEvents);
           renderWeather(payload.weather || {});
-          photos = payload.photos || [];
-          photoIndex = 0;
+          const nextPhotos = payload.photos || [];
+          const hasPhotoListChanged =
+            nextPhotos.length !== photos.length ||
+            nextPhotos.some((photo, index) => photo.url !== photos[index]?.url);
+          photos = nextPhotos;
+          if (hasPhotoListChanged) {
+            photoIndex = 0;
+          } else if (photoIndex >= photos.length) {
+            photoIndex = 0;
+          }
           renderCurrentPhoto();
         } catch (error) {
           console.error("Dashboard refresh failed", error);
+        } finally {
+          isRefreshing = false;
+          if (refreshQueued) {
+            refreshQueued = false;
+            refreshDashboard();
+          }
         }
       }
 
@@ -446,6 +526,7 @@
       setInterval(formatClock, 1000);
       refreshDashboard();
       setInterval(refreshDashboard, REFRESH_MS);
+      setInterval(pruneExpiredEvents, 15000);
       setInterval(advancePhoto, SLIDESHOW_MS);
     </script>
   </body>
